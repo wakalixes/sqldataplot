@@ -1,0 +1,29 @@
+<RCC>
+  <qresource prefix="icons">
+    <file>Status-dialog-information-icon.png</file>
+    <file>Actions-dialog-ok-apply-icon (1).png</file>
+    <file>undo_32.png</file>
+    <file>Utilities-icon.png</file>
+    <file>Actions-system-switch-user-icon.png</file>
+    <file>lattice_standard_icon.jpg</file>
+    <file>icon_clipboard.png</file>
+    <file>undo_32.png</file>
+    <file>Actions-view-refresh-icon.png</file>
+    <file>import-export-icon.png</file>
+    <file>database-icon.png</file>
+    <file>__init__.py</file>
+    <file>__init__.pyc</file>
+    <file>Add-32.png</file>
+    <file>Chart-Curve-32.png</file>
+    <file>Chart-Line-32.png</file>
+    <file>database_active-32.png</file>
+    <file>filesaveas-32.png</file>
+    <file>Gnome-Zoom-Fit-Best-32.png</file>
+    <file>mainrc.qrc</file>
+    <file>Move-32.png</file>
+    <file>Remove-32 (1).png</file>
+    <file>Remove-32.png</file>
+    <file>sub_blue_add-32.png</file>
+    <file>sub_blue_remove-32.png</file>
+  </qresource>
+</RCC>
