@@ -7,3 +7,7 @@ requirements
 ------------
 
 numpy, scipy, pysqlite, PyQt4, PyQwt5, MySQL-python
+
+screenshots
+-----------
+
