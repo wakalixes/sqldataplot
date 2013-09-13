@@ -6,4 +6,4 @@ data analysing software for plotting and fitting data, with a flexible plugin in
 requirements
 ------------
 
-numpy, scipy, pysqlite, PyQt4, PyQwt5, MySQL-python
+numpy, scipy, PyQt4, PyQwt5, pysqlite, MySQL-python
