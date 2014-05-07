@@ -348,10 +348,11 @@ class SqlDataPlotMainWindow(QtGui.QMainWindow, Ui_MainWindow):
     message( "\tAxes: '%s'" % axesStr)
 
     fitStr = ""
-    for i in xrange(self.parametersTbl.rowCount()):
-      keepchecked = "1" if self.parametersTbl.cellWidget(i,2) and self.parametersTbl.cellWidget(i,2).isChecked() else "0"
-      fixedchecked = "1" if self.parametersTbl.cellWidget(i,3) and self.parametersTbl.cellWidget(i,3).isChecked() else "0"
-      fitStr += str(self.parametersTbl.item(i,0).text())+","+str(self.parametersTbl.item(i,1).text())+","+keepchecked+","+fixedchecked+"|"
+    if self.parametersTbl.rowCount() > 0:
+      for i in xrange(self.parametersTbl.rowCount()):
+        keepchecked = "1" if self.parametersTbl.cellWidget(i,2) and self.parametersTbl.cellWidget(i,2).isChecked() else "0"
+        fixedchecked = "1" if self.parametersTbl.cellWidget(i,3) and self.parametersTbl.cellWidget(i,3).isChecked() else "0"
+        fitStr += str(self.parametersTbl.item(i,0).text())+","+str(self.parametersTbl.item(i,1).text())+","+keepchecked+","+fixedchecked+"|"
     message( "\tFit: '%s'" % fitStr)
     fitplugin = self.fitTypeCombo.currentText()
     
@@ -1105,7 +1106,7 @@ class SqlDataPlotMainWindow(QtGui.QMainWindow, Ui_MainWindow):
                        "FROM conditionTable WHERE Date=%s and Dataset=%s LIMIT 1", (self.date,self.dataset))
     dt = self.conditionCursor.fetchall()
     fitStrs = []
-    if len(dt)>0 and not dt[0][0] == None:
+    if len(dt)>0 and not dt[0][0] == None and not dt[0][1] == None and not dt[0][0] == "None":
       message( "Stored Fit Plugin for '%s': '%s'" % (self.dataset, dt[0][0]))
       fitplugin = dt[0][0]
       fitparams = (str(dt[0][1]).split("|"))[:-1]
