@@ -1385,12 +1385,13 @@ class SqlDataPlotMainWindow(QtGui.QMainWindow, Ui_MainWindow):
     # deal with it if
     try:
       param=[]
-      for i in xrange(self.parametersTbl.rowCount()):
-        paramv=float(self.parametersTbl.item(i,1).text())
-        paramfix=True if self.parametersTbl.cellWidget(i,3) and self.parametersTbl.cellWidget(i,3).isChecked() else False
-        param.append([paramv,paramfix])
-      fitSelection = [self.axesTbl.cellWidget(i,3).isChecked() for i in xrange(1,self.axesTbl.rowCount()) ]
-      self.currentFitData = self.fitSelectedPlugin.fit(self.currentData, self.currentErrData, param, xmin=self.fitFromSpin.value(), xmax=self.fitToSpin.value(), fitAxes=fitSelection)
+      if self.parametersTbl.rowCount() > 0:
+        for i in xrange(self.parametersTbl.rowCount()):
+          paramv=float(self.parametersTbl.item(i,1).text())
+          paramfix=True if self.parametersTbl.cellWidget(i,3) and self.parametersTbl.cellWidget(i,3).isChecked() else False
+          param.append([paramv,paramfix])
+        fitSelection = [self.axesTbl.cellWidget(i,3).isChecked() for i in xrange(1,self.axesTbl.rowCount()) ]
+        self.currentFitData = self.fitSelectedPlugin.fit(self.currentData, self.currentErrData, param, xmin=self.fitFromSpin.value(), xmax=self.fitToSpin.value(), fitAxes=fitSelection)
     except (ValueError, TypeError):
       self.textEdit.setText("fitting error")
       print "Fit is not converging!"
