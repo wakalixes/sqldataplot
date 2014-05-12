@@ -348,11 +348,13 @@ class SqlDataPlotMainWindow(QtGui.QMainWindow, Ui_MainWindow):
     message( "\tAxes: '%s'" % axesStr)
 
     fitStr = ""
-    if self.parametersTbl.rowCount() > 0:
-      for i in xrange(self.parametersTbl.rowCount()):
+    for i in xrange(self.parametersTbl.rowCount()):
+      if (self.parametersTbl.item(i,0) != None):
         keepchecked = "1" if self.parametersTbl.cellWidget(i,2) and self.parametersTbl.cellWidget(i,2).isChecked() else "0"
         fixedchecked = "1" if self.parametersTbl.cellWidget(i,3) and self.parametersTbl.cellWidget(i,3).isChecked() else "0"
         fitStr += str(self.parametersTbl.item(i,0).text())+","+str(self.parametersTbl.item(i,1).text())+","+keepchecked+","+fixedchecked+"|"
+      else:
+        self.parametersTbl.removeRow(i)
     message( "\tFit: '%s'" % fitStr)
     fitplugin = self.fitTypeCombo.currentText()
     
@@ -1114,9 +1116,9 @@ class SqlDataPlotMainWindow(QtGui.QMainWindow, Ui_MainWindow):
       fitplugin = "None"
       fitparams = []
 
-    print fitplugin
-    print fitparams
-    print "number of params: ",len(fitparams)
+    #print fitplugin
+    #print fitparams
+    #print "number of params: ",len(fitparams)
     numParams = len(fitparams)
 
     self.restoreComboIndex(self.fitTypeCombo,fitplugin)
@@ -1224,7 +1226,11 @@ class SqlDataPlotMainWindow(QtGui.QMainWindow, Ui_MainWindow):
 
   def loadData(self,r=0,c=0):
     """handle selected dataset: load data from database and generate array to plot"""
-    
+
+    # clear curves list
+    for c in self.curves:
+      c.detach()
+
     #do nothing if there is not at least on x and y axis or if last update was smaller than 100 ms ago
     if self.axesTbl.rowCount() < 2 or self.preventLoadingData:
       message ("skipping")
@@ -1385,13 +1391,16 @@ class SqlDataPlotMainWindow(QtGui.QMainWindow, Ui_MainWindow):
     # deal with it if
     try:
       param=[]
-      if self.parametersTbl.rowCount() > 0:
-        for i in xrange(self.parametersTbl.rowCount()):
+      for i in xrange(self.parametersTbl.rowCount()):
+        if (self.parametersTbl.item(i,1) != None):
           paramv=float(self.parametersTbl.item(i,1).text())
           paramfix=True if self.parametersTbl.cellWidget(i,3) and self.parametersTbl.cellWidget(i,3).isChecked() else False
           param.append([paramv,paramfix])
-        fitSelection = [self.axesTbl.cellWidget(i,3).isChecked() for i in xrange(1,self.axesTbl.rowCount()) ]
-        self.currentFitData = self.fitSelectedPlugin.fit(self.currentData, self.currentErrData, param, xmin=self.fitFromSpin.value(), xmax=self.fitToSpin.value(), fitAxes=fitSelection)
+          #print "param",i," value=",paramv," fixed=",paramfix
+        else:
+          self.parametersTbl.removeRow(i)
+      fitSelection = [self.axesTbl.cellWidget(i,3).isChecked() for i in xrange(1,self.axesTbl.rowCount()) ]
+      self.currentFitData = self.fitSelectedPlugin.fit(self.currentData, self.currentErrData, param, xmin=self.fitFromSpin.value(), xmax=self.fitToSpin.value(), fitAxes=fitSelection)
     except (ValueError, TypeError):
       self.textEdit.setText("fitting error")
       print "Fit is not converging!"
@@ -1401,25 +1410,36 @@ class SqlDataPlotMainWindow(QtGui.QMainWindow, Ui_MainWindow):
       pass
       
     # put out all the fit parameters
+    # this speeds up things a lot as changing items in the parameterlist would always update everything
+    self.parametersTbl.blockSignals(True)
+    parameters = self.fitSelectedPlugin.getParameters()
+
+    # TODO von anderen fits die parameter!
+    plainText = ""
+    plugin = self.fitSelectedPlugin
+    info = self.fitSelectedPlugin.getInfoStr()
+    converged = plugin.isConverged()
+    # print "rp:", plugin.rp
+    # print "rerr:", plugin.rerr
+    # print "converged:", converged
     try:
-      # this speeds up things a lot as changing items in the parameterlist would always update everything
-      self.parametersTbl.blockSignals(True)
-      parameters = self.fitSelectedPlugin.getParameters()
-      
-      # TODO von anderen fits die parameter!
-      plainText = ""
-      plugin = self.fitSelectedPlugin
-      info = self.fitSelectedPlugin.getInfoStr()
       for ai in xrange(self.axesTbl.rowCount()-1):
         plainText = "%s<p style=\"font-size:11pt;font-weight:bold; margin:0px;\">%s:</p> " \
                     "<hr>" % (plainText,self.axesTbl.cellWidget(ai+1,0).currentText())
-        if self.fitSelectedPlugin.isConverged():
+        if converged[ai]:
           plainText = "%s<p style=\"margin-top:0px; margin-bottom:5px;margin-left:10px\">" % plainText
           for i in xrange(len(parameters)):
-            plainText = "%s<b>%s</b>=\t<span style=\"font-weight: bold;font-size:10pt;color:#00aa00;\">%s +/- %s</span><br>" % (plainText,self.parametersTbl.item(i,0).text(),round_to_n(plugin.rp[ai][i],5),round_to_n(plugin.rerr[ai][i],5))
-
-        if info:
-          plainText = "%s\t info: %s</p>" % (plainText,info[ai])
+            if plugin.rerr[ai][i]=="Err":
+              plainText = "%s<b>%s</b>=\t<span style=\"font-weight: bold;font-size:10pt;color:#00aa00;\">%s</span><br>" % (plainText,self.parametersTbl.item(i,0).text(),round_to_n(plugin.rp[ai][i],5))
+            else:
+              plainText = "%s<b>%s</b>=\t<span style=\"font-weight: bold;font-size:10pt;color:#00aa00;\">%s +/- %s</span><br>" % (plainText,self.parametersTbl.item(i,0).text(),round_to_n(plugin.rp[ai][i],5),round_to_n(plugin.rerr[ai][i],5))
+          if info[ai]:
+            plainText = "%s\t info: %s</p>" % (plainText,info[ai])
+        else:
+          if (self.axesTbl.cellWidget(ai+1,3).isChecked()):
+            plainText = "%sFit is not converging!" % (plainText)
+          else:
+            plainText = "%sFit is not selected!" % (plainText)
         
       self.textEdit.setText(plainText)
     except (ValueError, TypeError):
@@ -1556,7 +1576,7 @@ class SqlDataPlotMainWindow(QtGui.QMainWindow, Ui_MainWindow):
     curveIndex = 0;
     for j in xrange(self.currentData.shape[0]-1):
       # is fitting data available?
-      if self.currentFitData.size > 0 and self.axesTbl.cellWidget(j+1, 3).isChecked() and self.fitDataButton.isChecked():
+      if self.currentFitData.size > 0 and self.axesTbl.cellWidget(j+1,3).isChecked() and self.fitDataButton.isChecked():
         self.showCurve(curveIndex,self.currentFitData[0]*multiplicators[0] + offsets[0], self.currentFitData[j+1]*multiplicators[j+1] + offsets[j+1], hints="fit", colorIdx=j)
         curveIndex+=1
 

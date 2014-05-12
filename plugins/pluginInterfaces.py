@@ -173,6 +173,7 @@ def find_subclasses(path, cls):
 
 class PluginFit(object):
     # this stores all the results
+    curveNum = 0
     fitData = np.array([])
     rerr = np.array([])
     rp = np.array([])
@@ -193,11 +194,12 @@ class PluginFit(object):
     def simpleFitAllAxes(self, f, data, errdata=[], xmin=0, xmax=0, fitAxes=[]):
         """ simple fitting routine, all yaxes get fitted here"""
         # reserve space for results and fit all y axes
-        curveNum = int(np.size(data,0)-1)
+        self.curveNum = int(np.size(data,0)-1)
+        # print "curveNum:", self.curveNum
         errorcnt = int(np.size(errdata,0))
-        self.rp = range(curveNum)
-        self.rerr = range(curveNum)
-        self.info = range(curveNum)
+        self.rp = range(self.curveNum)
+        self.rerr = range(self.curveNum)
+        self.info = range(self.curveNum)
      
         if not xmin == xmax:
             t = data[:, data[0,:]>xmin]
@@ -208,7 +210,7 @@ class PluginFit(object):
             
         # print "ErrorData: ",errdata
         # print "errorcnt: ",errorcnt
-        for j in range(curveNum):
+        for j in range(self.curveNum):
             if fitAxes[j] and errorcnt==0:
                 print "Fitting without error bar ..."
                 [out, cov_x, infodict, mesg, resCode]=leastsqFit(f, self.params, data[j+1], data[0])
@@ -280,7 +282,7 @@ class PluginFit(object):
                 self.rerr[j]= "n/a"
                 self.info[j] = "Nothing selected for fitting."
 	
-    def generateDataFromParameters(self,f,span,numAxes, xmin=0, xmax=0, fitAxes=[]):
+    def generateDataFromParameters(self, f, span, numAxes, xmin=0, xmax=0, fitAxes=[]):
         """ not for public calling, generate data to plot from fit parameters"""
         # fit finished, now lets return the data for plotting a curve of the result
         if xmin == xmax:
@@ -293,23 +295,20 @@ class PluginFit(object):
         xdata = np.linspace(m1, m2, 10000)
         fitdata = np.zeros((numAxes, np.size(xdata)))
         fitdata[0,:] = xdata
-      
+
+        #print "fitaxes:", fitAxes
+        #print "numaxes:", numAxes
         print "shape rp, fitdata:", len(self.rp), fitdata.shape
         print "rp:",self.rp
 
         for i,p in enumerate(self.rp):
-            for idp,v in enumerate(p):
-                self.params[idp].set(v)
-            fitdata[i+1,:] = map(f, fitdata[0,:])
-        # print "fitdata:",fitdata
+            if fitAxes[i]:
+                for idp,v in enumerate(p):
+                    self.params[idp].set(v)
+                fitdata[i+1,:] = map(f, fitdata[0,:])
+            else:
+                fitdata[i+1,:] = None
         return fitdata
-      
-        #    if fitAxes[i]:
-        #        self.params = [Parameter(ip) for ip in p]        
-        #        fitdata[i+1,:] =  map(f, fitdata[0,:])
-      
-      
-         # return fitdata
       
     def getInfoStr(self):
         return self.info
@@ -320,12 +319,13 @@ class PluginFit(object):
       
     def isConverged(self):
         """return if fitting was good"""
-        c=False
-        try:
-            c = len(self.rerr[0]) == len(self.getParameters())
-        except:
-            pass
-      
+        c = []
+        for i in range(0,self.curveNum):
+            print self.rp[i]
+            if self.rp[i]=="n/a":
+                c.append(False)
+            else:
+                c.append(True)
         return c
       
     def getFitModelStr(self):

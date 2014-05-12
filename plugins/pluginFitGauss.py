@@ -20,7 +20,7 @@ class PluginFitGauss(PluginFit):
       def f(x): return self.params[0]()/(self.params[2]() * np.sqrt(np.pi / 2)) *np.exp(-2*((x - self.params[1]())**2) / (self.params[2]()**2)) + self.params[3]()
       
       self.simpleFitAllAxes(f,array,errarray,xmin,xmax, fitAxes)
-      return self.generateDataFromParameters(f,[np.amin(array[0,:]),np.amax(array[0,:])], np.size(array[0,:]),xmin,xmax, fitAxes)
+      return self.generateDataFromParameters(f,[np.amin(array[0,:]),np.amax(array[0,:])], np.size(fitAxes)+1, xmin, xmax, fitAxes)
           
     def getParameters(self):
       """return the fit parameters"""

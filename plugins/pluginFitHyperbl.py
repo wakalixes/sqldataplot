@@ -19,7 +19,7 @@ class PluginFitHyperbl(PluginFit):
           return self.params[0]()*x / (x + self.params[1]())      
 
       self.simpleFitAllAxes(f,array,errarray,xmin,xmax, fitAxes)
-      return self.generateDataFromParameters(f,[np.amin(array[0,:]),np.amax(array[0,:])], np.size(array[0,:]),xmin,xmax, fitAxes)
+      return self.generateDataFromParameters(f,[np.amin(array[0,:]),np.amax(array[0,:])], np.size(fitAxes)+1, xmin, xmax, fitAxes)
       
     def getInitialParameters(self,data):
       """find the best initial values and return them"""

@@ -22,7 +22,7 @@ class PluginFitSinusDecay(PluginFit):
           return self.params[0]()*np.exp(-x/1000/self.params[4]())*np.sin(2*np.pi*x/1000 * self.params[1]() - self.params[2]()) + self.params[3]()
       
       self.simpleFitAllAxes(f,array,errarray,xmin,xmax, fitAxes)
-      return self.generateDataFromParameters(f,[np.amin(array[0,:]),np.amax(array[0,:])], np.size(array[0,:]),xmin,xmax, fitAxes)
+      return self.generateDataFromParameters(f,[np.amin(array[0,:]),np.amax(array[0,:])], np.size(fitAxes)+1, xmin, xmax, fitAxes)
           
     def getParameters(self):
       """return the fit parameters"""
