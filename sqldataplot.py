@@ -944,7 +944,7 @@ class SqlDataPlotMainWindow(QtGui.QMainWindow, Ui_MainWindow):
     
     self.date = str(date)
     message ("selected date "+date)
-    self.dbcur.execute ("SELECT DISTINCT Dataset FROM dataTable WHERE Date=%s", str(date));
+    self.dbcur.execute ("SELECT DISTINCT Dataset FROM dataTable WHERE Date=%s", [str(date)]);
     self.db.commit()
     dt=self.dbcur.fetchall()
     sets = range(len(dt))
