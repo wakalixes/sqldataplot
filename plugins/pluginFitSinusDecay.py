@@ -4,8 +4,8 @@
 # 	Author = $Author: stefan $
 #--------------------------------------------------
 
-from pluginInterfaces import PluginFit
-from pluginInterfaces import PluginFit, Parameter,leastsqFit
+from plugins.pluginInterfaces import PluginFit
+from plugins.pluginInterfaces import PluginFit, Parameter,leastsqFit
 from math import exp
 import numpy as np
 
@@ -33,7 +33,7 @@ class PluginFitSinusDecay(PluginFit):
       freq = np.fft.fftfreq(data[0].shape[-1])
       
       sp = np.fft.fft(data[1])
-      nd = np.array(zip(freq*2000,(sp.real**2 + sp.imag**2)))
+      nd = np.array(list(zip(freq*2000,(sp.real**2 + sp.imag**2))))
       # high pass filter
       nd = nd[2:]
       nd = nd[nd[:,0]>0]

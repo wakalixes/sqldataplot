@@ -2,8 +2,8 @@
 
 # Form implementation generated from reading ui file 'exportDialog.ui'
 #
-# Created: Fri Jul 08 17:01:21 2011
-#      by: PyQt4 UI code generator 4.8.4
+# Created: Thu Jan 15 18:12:26 2015
+#      by: PyQt4 UI code generator 4.11.3
 #
 # WARNING! All changes made in this file will be lost!
 
@@ -12,7 +12,16 @@ from PyQt4 import QtCore, QtGui
 try:
     _fromUtf8 = QtCore.QString.fromUtf8
 except AttributeError:
-    _fromUtf8 = lambda s: s
+    def _fromUtf8(s):
+        return s
+
+try:
+    _encoding = QtGui.QApplication.UnicodeUTF8
+    def _translate(context, text, disambig):
+        return QtGui.QApplication.translate(context, text, disambig, _encoding)
+except AttributeError:
+    def _translate(context, text, disambig):
+        return QtGui.QApplication.translate(context, text, disambig)
 
 class Ui_ExportDialog(object):
     def setupUi(self, ExportDialog):
@@ -52,6 +61,7 @@ class Ui_ExportDialog(object):
         QtCore.QMetaObject.connectSlotsByName(ExportDialog)
 
     def retranslateUi(self, ExportDialog):
-        ExportDialog.setWindowTitle(QtGui.QApplication.translate("ExportDialog", "Export options", None, QtGui.QApplication.UnicodeUTF8))
-        self.plotImageCheck.setText(QtGui.QApplication.translate("ExportDialog", "plot (image)", None, QtGui.QApplication.UnicodeUTF8))
-        self.plotDataCheck.setText(QtGui.QApplication.translate("ExportDialog","plot (data)", None, QtGui.QApplication.UnicodeUTF8))
+        ExportDialog.setWindowTitle(_translate("ExportDialog", "Export options", None))
+        self.plotImageCheck.setText(_translate("ExportDialog", "plot (image)", None))
+        self.plotDataCheck.setText(_translate("ExportDialog", "plot (data)", None))
+

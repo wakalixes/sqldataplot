@@ -26,7 +26,7 @@
 
 from PyQt4 import QtCore
 from PyQt4 import QtGui
-from exportDialog_ui import Ui_ExportDialog
+from exportdialog_ui import Ui_ExportDialog
 import csv
 import os
 import sys
@@ -52,7 +52,7 @@ class ExportDialogWindow(QtGui.QDialog, Ui_ExportDialog):
     self.filepath = filepath  
     # save plot as image
     if self.plotImageCheck.isChecked():
-        print "saving plot image"
+        print("saving plot image")
         pic = QtGui.QPicture()
         pixmap = QtGui.QPixmap(800,600)
         pixmap.fill()
@@ -64,7 +64,7 @@ class ExportDialogWindow(QtGui.QDialog, Ui_ExportDialog):
         #painter.drawPicture(0,0,picture)
         painter.end()
         pixmap.save(outputPath+".png")
-        print outputPath
+        print(outputPath)
 
     # save all data
     if self.plotDataCheck.isChecked():
@@ -79,7 +79,7 @@ class ExportDialogWindow(QtGui.QDialog, Ui_ExportDialog):
           for i in range(self.parent.axesTbl.rowCount()):
             axesCaptions.append("d"+self.parent.axesTbl.cellWidget(i,0).currentText())
 
-        print axesCaptions
+        print(axesCaptions)
         w.writerow(axesCaptions)
 
         if not self.parent.averageDataButton.isChecked():
@@ -87,8 +87,8 @@ class ExportDialogWindow(QtGui.QDialog, Ui_ExportDialog):
             w.writerow(r)
         else:
           for r in (np.transpose(zip(self.parent.currentData,self.parent.currentErrData))):
-            print r
-            print r.flatten()
+            print(r)
+            print(r.flatten())
             w.writerow(r.flatten())
 
 

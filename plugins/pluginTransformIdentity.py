@@ -4,7 +4,7 @@
 # 	Author = $Author: stefan $
 #--------------------------------------------------
 
-from pluginInterfaces import PluginTransform
+from plugins.pluginInterfaces import PluginTransform
 import numpy as np
 
 class PluginTransformIdentity(PluginTransform):

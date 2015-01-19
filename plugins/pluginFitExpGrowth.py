@@ -4,7 +4,7 @@
 # 	Author = $Author: stefan $
 #--------------------------------------------------
 
-from pluginInterfaces import PluginFit, Parameter,leastsqFit
+from plugins.pluginInterfaces import PluginFit, Parameter,leastsqFit
 import numpy as np
 
 class PluginFitExpDec1(PluginFit):
@@ -24,7 +24,7 @@ class PluginFitExpDec1(PluginFit):
       """find the best initial values and return them"""
       dx = np.abs(data[0,0] - data[0,-1])
       dy = np.abs(data[1,0] - data[1,-1])
-      t = np.amax(data[1,:])/10;
+      t = np.amax(data[1,:])*10;
       mi = np.amin(data[1,:])
       ma = np.amax(data[1,:])
             

@@ -4,7 +4,7 @@
 # 	Author = $Author: stefan $
 #--------------------------------------------------
 
-from pluginInterfaces import PluginTransform
+from plugins.pluginInterfaces import PluginTransform
 import numpy as np
 import csv
 import os,sys
@@ -14,7 +14,7 @@ class PluginTransformI2B2a(PluginTransform):
         self.pathname = os.path.realpath(os.path.dirname(sys.argv[0]))
 
         def importData(csvFile):
-            datacsv = csv.reader(open(self.pathname+"/plugins/feshbachdata/"+csvFile, 'rb'), delimiter=',', quotechar='|')
+            datacsv = csv.reader(open(self.pathname+"/plugins/feshbachdata/"+csvFile, 'rt', newline=""), delimiter=',', quotechar='|')
 
             data = []
             for row in datacsv:

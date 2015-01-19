@@ -9,7 +9,7 @@ import os as os
 from scipy import optimize
 from scipy import odr
 def message(s):
-    print s
+    print(s)
   
 
 
@@ -20,7 +20,7 @@ class Parameter:
     def __init__(self,value):
         # print "parameter value:",value[0]," fixed=",value[1]
         if not len(value)==2:
-            print "Wrong fitting parameter format!"
+            print("Wrong fitting parameter format!")
             return
         self.value=value[0]
         self.isFixed=value[1]
@@ -197,9 +197,9 @@ class PluginFit(object):
         self.curveNum = int(np.size(data,0)-1)
         # print "curveNum:", self.curveNum
         errorcnt = int(np.size(errdata,0))
-        self.rp = range(self.curveNum)
-        self.rerr = range(self.curveNum)
-        self.info = range(self.curveNum)
+        self.rp = list(range(self.curveNum))
+        self.rerr = list(range(self.curveNum))
+        self.info = list(range(self.curveNum))
      
         if not xmin == xmax:
             t = data[:, data[0,:]>xmin]
@@ -212,15 +212,15 @@ class PluginFit(object):
         # print "errorcnt: ",errorcnt
         for j in range(self.curveNum):
             if fitAxes[j] and errorcnt==0:
-                print "Fitting without error bar ..."
+                print("Fitting without error bar ...")
                 [out, cov_x, infodict, mesg, resCode]=leastsqFit(f, self.params, data[j+1], data[0])
                 freeP = (out)
-                # print "covariance: ",cov_x
-                if cov_x==None:
-                    print "cov_x = None, fitting may be diverged."
+                print("covariance: ",cov_x)
+                if cov_x is None:
+                    print("cov_x = None, fitting may be diverged.")
                     freeErr=["Err" for i in range(len(freeP))]
                 elif (float(len(data[0])) - float(len(out)))<=0:
-                    print "# of parameter > Degree of freedom."
+                    print("# of parameter > Degree of freedom.")
                     freeErr=["Err" for i in range(len(freeP))]
                 else:
                     freeErr=np.sqrt(np.diag(cov_x)*(infodict['fvec']*infodict['fvec']).sum()/( float(len(data[0])) - float(len(out)) )) # [std_FreeParam1, std_FreeParam2, ...]            
@@ -241,7 +241,7 @@ class PluginFit(object):
 
             ### fitting is active, With error bar  
             elif fitAxes[j] and errorcnt>0: # fitting is active, With error bar
-                print "Fitting with error bar ..."
+                print("Fitting with error bar ...")
                 # check if there is an error for every data point
                 for i in range(errdata.shape[0]):
                     if errdata[j+1][i]==0:
@@ -252,10 +252,10 @@ class PluginFit(object):
                 freeP = (popt) # # [BestValue_FreeParam1, BestValue_FreeParam2, ...]
                 # print "fitting out:", popt, pcov
                 if pcov==None: #
-                    print "pcov = None, fitting may be diverged."
+                    print("pcov = None, fitting may be diverged.")
                     freeErr=["Err" for i in range(len(freeP))]
                 elif (float(len(data[0])) - float(len(popt)))<=0:
-                    print "# of parameter > Degree of freedom."
+                    print("# of parameter > Degree of freedom.")
                     freeErr=["Err" for i in range(len(freeP))]
                 else:
                     freeErr= np.sqrt(np.diag(pcov)) # [std_FreeParam1, std_FreeParam2, ...]            
@@ -298,14 +298,14 @@ class PluginFit(object):
 
         #print "fitaxes:", fitAxes
         #print "numaxes:", numAxes
-        print "shape rp, fitdata:", len(self.rp), fitdata.shape
-        print "rp:",self.rp
+        print("shape rp, fitdata:", len(self.rp), fitdata.shape)
+        print("rp:",self.rp)
 
         for i,p in enumerate(self.rp):
             if fitAxes[i]:
                 for idp,v in enumerate(p):
                     self.params[idp].set(v)
-                fitdata[i+1,:] = map(f, fitdata[0,:])
+                fitdata[i+1,:] = list(map(f, fitdata[0,:]))
             else:
                 fitdata[i+1,:] = None
         return fitdata
@@ -321,7 +321,7 @@ class PluginFit(object):
         """return if fitting was good"""
         c = []
         for i in range(0,self.curveNum):
-            print self.rp[i]
+            print(self.rp[i])
             if self.rp[i]=="n/a":
                 c.append(False)
             else:

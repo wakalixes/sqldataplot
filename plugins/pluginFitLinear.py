@@ -4,7 +4,7 @@
 # 	Author = $Author: stefan $
 #--------------------------------------------------
 
-from pluginInterfaces import PluginFit, Parameter,leastsqFit
+from plugins.pluginInterfaces import PluginFit, Parameter,leastsqFit
 import numpy as np
 
 class PluginFitLinear(PluginFit):

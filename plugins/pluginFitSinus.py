@@ -4,8 +4,8 @@
 # 	Author = $Author: stefan $
 #--------------------------------------------------
 
-from pluginInterfaces import PluginFit
-from pluginInterfaces import PluginFit, Parameter,leastsqFit
+from plugins.pluginInterfaces import PluginFit
+from plugins.pluginInterfaces import PluginFit, Parameter,leastsqFit
 from math import exp
 import numpy as np
 
@@ -14,7 +14,7 @@ class PluginFitSinus(PluginFit):
       pass
     
 
-    def fit(self,array,errarray,param,xmin=0,xmax=0, fitAxes=[]):
+    def fit(self,array,errarray,param,xmin=0,xmax=0,fitAxes=[]):
       """return the data that is needed for plotting the fitting result"""
       self.params = [Parameter(v) for v in param]     
       def f(x): return self.params[0]()*np.sin(2*np.pi*x * self.params[1]() - self.params[2]()) + self.params[3]()
@@ -30,7 +30,7 @@ class PluginFitSinus(PluginFit):
       freq = np.fft.fftfreq(data[0].shape[-1])
       
       sp = np.fft.fft(data[1])
-      nd = np.array(zip(freq*100000,(sp.real**2 + sp.imag**2)))
+      nd = np.array(list(zip(freq*100000,(sp.real**2 + sp.imag**2))))
       # high pass filter
       nd = nd[2:]
       nd = nd[nd[:,0]>0]

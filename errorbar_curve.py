@@ -3,7 +3,7 @@
 import sys
 from PyQt4 import Qt
 import PyQt4.Qwt5 as Qwt
-from PyQt4.Qwt5.anynumpy import *
+from numpy import *
 
 
 class ErrorBarPlotCurve(Qwt.QwtPlotCurve):
@@ -79,15 +79,15 @@ class ErrorBarPlotCurve(Qwt.QwtPlotCurve):
           (x-dx[0], x+dx[1]) or (y-dy[0], y+dy[1]).
         """
 
-        self.__x = asarray(x, Float)
+        self.__x = asarray(x, dtype=float32)
         if len(self.__x.shape) != 1:
-            raise RuntimeError, 'len(asarray(x).shape) != 1'
+            raise RuntimeError('len(asarray(x).shape) != 1')
 
-        self.__y = asarray(y, Float)
+        self.__y = asarray(y, dtype=float32)
         if len(self.__y.shape) != 1:
-            raise RuntimeError, 'len(asarray(y).shape) != 1'
+            raise RuntimeError('len(asarray(y).shape) != 1')
         if len(self.__x) != len(self.__y):
-            raise RuntimeError, 'len(asarray(x)) != len(asarray(y))' 
+            raise RuntimeError('len(asarray(x)) != len(asarray(y))') 
 
         if dx is None:
             self.__dx = None

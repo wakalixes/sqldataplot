@@ -4,8 +4,8 @@
 # 	Author = $Author: stefan $
 #--------------------------------------------------
 
-from pluginInterfaces import PluginFit, Parameter,leastsqFit
-from pluginConstants import *
+from plugins.pluginInterfaces import PluginFit, Parameter,leastsqFit
+from plugins.pluginConstants import *
 import numpy as np
 
 class PluginFitTimeOfFlight(PluginFit):

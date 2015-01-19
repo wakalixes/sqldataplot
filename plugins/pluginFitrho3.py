@@ -4,7 +4,7 @@
 # 	Author = $Author: stefan $
 #--------------------------------------------------
 
-from pluginInterfaces import PluginFit, Parameter,leastsqFit
+from plugins.pluginInterfaces import PluginFit, Parameter,leastsqFit
 import numpy as np
 
 hbarp = 6.626068*10**-34/(2*np.pi);

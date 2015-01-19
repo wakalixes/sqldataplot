@@ -35,6 +35,7 @@ import os
 import math
 from collections import defaultdict
 from datetime import datetime
+from distutils import util
 
 from scipy import linspace, polyval, polyfit, sqrt, stats, randn
 #from uncertainties import ufloat, nominal_value, std_dev
@@ -49,7 +50,7 @@ import PyQt4.Qwt5 as Qwt
 
 from errorbar_curve import ErrorBarPlotCurve
 
-from pysqlite2 import dbapi2 as sqlite
+from sqlite3 import dbapi2 as sqlite
 import MySQLdb as mysql
 
 from plugins.pluginInterfaces import PluginFit, PluginTransform, find_subclasses
@@ -59,11 +60,11 @@ debugMessages=False
 debugTiming=False
 
 def errorMessage(s):
-  print s
+  print(s)
 
 def message(s):
   if debugMessages:
-    print s
+    print(s)
   else:
     pass
   
@@ -166,19 +167,19 @@ class SqlDataPlotMainWindow(QtGui.QMainWindow, Ui_MainWindow):
     self.conditionTbl.setHorizontalHeaderLabels(["","name", "condition", "val",""])
     self.conditionTbl.setRowHeight(0,20)
 
-    for i in xrange(self.axesTbl.rowCount()):
+    for i in range(self.axesTbl.rowCount()):
       self.axesTbl.resizeColumnToContents(i)
 
-    for i in xrange(self.conditionTbl.rowCount()):
+    for i in range(self.conditionTbl.rowCount()):
       self.conditionTbl.resizeColumnToContents(i)
 
-    for i in xrange(self.parametersTbl.rowCount()):
+    for i in range(self.parametersTbl.rowCount()):
       self.parametersTbl.resizeColumnToContents(i)
     
     #look for fitting plugins and add them
     self.fitPlugins = find_subclasses("plugins/", PluginFit)
     for i,plugin in enumerate(self.fitPlugins):
-      self.fitTypeCombo.addItem(QtCore.QString(plugin().getFitModelStr()))        
+      self.fitTypeCombo.addItem(plugin().getFitModelStr())        
       if plugin().getFitModelStr() == "None":
         self.fitSelectedPlugin=plugin()
         self.fitTypeCombo.setCurrentIndex(i)
@@ -186,7 +187,7 @@ class SqlDataPlotMainWindow(QtGui.QMainWindow, Ui_MainWindow):
     #look for transform plugins and add them
     self.transformPlugins = find_subclasses("plugins/", PluginTransform)
     for i,plugin in enumerate(self.transformPlugins):
-      self.transformTypeCombo.addItem(QtCore.QString(plugin().getTransformModelStr()))        
+      self.transformTypeCombo.addItem(plugin().getTransformModelStr())        
       if plugin().getTransformModelStr() == "Identity":
         self.transformTypeCombo.setCurrentIndex(i)
         self.transformPluginSelected(i)
@@ -289,8 +290,8 @@ class SqlDataPlotMainWindow(QtGui.QMainWindow, Ui_MainWindow):
       self.dbcur.execute("SELECT * FROM dataTable LIMIT 1")
       self.saveInfo()
       self.db.commit()
-    except mysql.Error,e:
-      print "Error in keeping connetion alive, reconnecting..."
+    except mysql.Error:
+      print("Error in keeping connetion alive, reconnecting...")
       self.connectToDatabase()
   #dontLooseConnection(self)
 
@@ -331,24 +332,24 @@ class SqlDataPlotMainWindow(QtGui.QMainWindow, Ui_MainWindow):
   def saveInfo(self,i=0):
     global debugMessages
     if self.date == "" or self.dataset == "" or debugMessages:
-      print "not saving infos!"
+      print("not saving infos!")
       return
     
     message ("Storing info")
     idstr = "%s::%s" % (self.date, self.dataset)
     condStr = ""
-    for i in xrange(self.conditionTbl.rowCount()):
+    for i in range(self.conditionTbl.rowCount()):
       checked = "1" if self.conditionTbl.cellWidget(i,0) and self.conditionTbl.cellWidget(i,0).isChecked() else "0"
       condStr += str(self.conditionTbl.cellWidget(i,1).currentText())+","+str(self.conditionTbl.cellWidget(i,2).currentText())+","+str(self.conditionTbl.item(i,3).text())+","+checked+"|"
 
     axesStr = ""
-    for i in xrange(self.axesTbl.rowCount()):
+    for i in range(self.axesTbl.rowCount()):
       checked = "1" if self.axesTbl.cellWidget(i,3) and self.axesTbl.cellWidget(i,3).isChecked() else "0"
       axesStr += str(self.axesTbl.cellWidget(i,0).currentText())+","+str(self.axesTbl.item(i,1).text())+","+str(self.axesTbl.item(i,2).text())+","+checked+"|"
     message( "\tAxes: '%s'" % axesStr)
 
     fitStr = ""
-    for i in xrange(self.parametersTbl.rowCount()):
+    for i in range(self.parametersTbl.rowCount()):
       if (self.parametersTbl.item(i,0) != None):
         keepchecked = "1" if self.parametersTbl.cellWidget(i,2) and self.parametersTbl.cellWidget(i,2).isChecked() else "0"
         fixedchecked = "1" if self.parametersTbl.cellWidget(i,3) and self.parametersTbl.cellWidget(i,3).isChecked() else "0"
@@ -360,7 +361,7 @@ class SqlDataPlotMainWindow(QtGui.QMainWindow, Ui_MainWindow):
     
     transformplugin = self.transformTypeCombo.currentText()
     transformStr = ""
-    for i in xrange(self.transformConstantTbl.rowCount()):
+    for i in range(self.transformConstantTbl.rowCount()):
       transformStr += str(self.transformConstantTbl.item(i,1).text())+"|"
     message( "\tTransforms: '%s'" % transformStr)
     
@@ -375,9 +376,8 @@ class SqlDataPlotMainWindow(QtGui.QMainWindow, Ui_MainWindow):
       self.conditionCursor.execute("REPLACE INTO conditionTable (id, Date, Dataset, Conditions, Temperature, Holding, Trap, Ramping, Compressed, Calibration, Text, axes, fitplugin, fitparameters, transformplugin, transformparameters)" \
                         "VALUES(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)" \
                         , (idstr, self.date, self.dataset, condStr, temp, hold, trap, ramp, comp, cali, text, axesStr, fitplugin, fitStr, transformplugin, transformStr))
-    except mysql.Error,e:
-      print "Something went wrong while I wanted to save date, too much information in one column, alter the table column accordingly"
-      print e
+    except mysql.Error:
+      print("Something went wrong while I wanted to save date, too much information in one column, alter the table column accordingly")
       pass
     
     self.db.commit()
@@ -409,13 +409,13 @@ class SqlDataPlotMainWindow(QtGui.QMainWindow, Ui_MainWindow):
       self.calibrationEdit.setText("n/a")
       self.infoEdit.setPlainText("n/a")
       
-    if len(dt)>0 and not dt[0][2] == None:
+    if len(dt)>0 and not dt[0][2] is None:
       conditionStrs = str(dt[0][2]).split("|")[:-1]
       self.numConditions = len(conditionStrs)
     else:
       self.numConditions = 1
       
-    if len(dt)>0 and not dt[0][10] == None:
+    if len(dt)>0 and not dt[0][10] is None:
       axesStrs = (str(dt[0][10]).split("|"))[:-1]
       self.numAxes = len(axesStrs)
     else:
@@ -428,7 +428,7 @@ class SqlDataPlotMainWindow(QtGui.QMainWindow, Ui_MainWindow):
                        "FROM conditionTable WHERE Date=%s and Dataset=%s LIMIT 1", (self.date,self.dataset))
     dt = self.conditionCursor.fetchall()
 
-    if len(dt)>0 and not dt[0][0] == None:
+    if len(dt)>0 and not dt[0][0] is None:
       conditionStrs = str(dt[0][0]).split("|")[:-1]
     else:
       conditionStrs = ["N_atoms,>,0"] # standard conditions
@@ -446,7 +446,7 @@ class SqlDataPlotMainWindow(QtGui.QMainWindow, Ui_MainWindow):
       self.conditionTbl.setRowCount(self.numConditions)
       self.conditionTbl.horizontalHeader().setVisible(True)
       
-      for row in xrange(self.conditionTbl.rowCount()):
+      for row in range(self.conditionTbl.rowCount()):
 
         if row < len(conditionStrs):
           cCondition = conditionStrs[row].split(",") # saved conditions for this one
@@ -476,7 +476,7 @@ class SqlDataPlotMainWindow(QtGui.QMainWindow, Ui_MainWindow):
           self.conditionTbl.setRowHeight(row,20)
           
           for c in self.comparisons:
-            ccombo.addItem(QtCore.QString(c))
+            ccombo.addItem(c)
             
           if row==0:
             ccombo.setCurrentIndex(3)
@@ -490,7 +490,7 @@ class SqlDataPlotMainWindow(QtGui.QMainWindow, Ui_MainWindow):
         combo.clear()
 
         for i,desc in enumerate(self.keys):
-          combo.addItem(QtCore.QString(desc[0]))
+          combo.addItem(desc[0])
 
           if cCondition[0] == desc[0]:
               combo.setCurrentIndex(i)
@@ -544,12 +544,12 @@ class SqlDataPlotMainWindow(QtGui.QMainWindow, Ui_MainWindow):
   def copyDataToClipboard(self):
     cb = QtGui.QApplication.clipboard()
     axesCaptions = []
-    for i in xrange(self.axesTbl.rowCount()):
+    for i in range(self.axesTbl.rowCount()):
       axesCaptions.append(str(self.axesTbl.cellWidget(i,0).currentText()))
       axesCaptions.append("\t")
 
     if self.averageDataButton.isChecked():
-      for i in xrange(self.axesTbl.rowCount()):
+      for i in range(self.axesTbl.rowCount()):
         axesCaptions.append("d"+str(self.axesTbl.cellWidget(i,0).currentText()))
         axesCaptions.append("\t")
     axesCaptions.append("\n")
@@ -574,43 +574,42 @@ class SqlDataPlotMainWindow(QtGui.QMainWindow, Ui_MainWindow):
   #copyDataToClipboard(self)
 
   def loadSettings(self):
-     if self.db == None:
+     if self.db is None:
        return
      # restore settings
      settings = QtCore.QSettings("LevT","sql_data_plot")
      # restore last status
      message ("Load settings")
-     self.restoreComboIndex(self.dateCombo, settings.value("Date").toString())
+     self.restoreComboIndex(self.dateCombo, settings.value("Date"))
      self.dateSelected(self.dateCombo.currentText())
  
-     self.restoreListIndex(self.datasetList,settings.value("Dataset").toString())
+     self.restoreListIndex(self.datasetList,settings.value("Dataset"))
      self.datasetSelected(self.datasetList.currentItem())
      
-     self.fitDataButton.setChecked(settings.value("fitData").toBool())
-     self.transformDataButton.setChecked(settings.value("transformData").toBool())
-     self.averageDataButton.setChecked(settings.value("averageData").toBool())
+     self.fitDataButton.setChecked(util.strtobool(settings.value("fitData")))
+     self.transformDataButton.setChecked(util.strtobool(settings.value("transformData")))
+     self.averageDataButton.setChecked(util.strtobool(settings.value("averageData")))
 
      # restore settings concering axes selections
-     axesList = settings.value("axesList").toList()
-     axesScaleList = settings.value("axesScaleList").toList()
-     axesOffsetList = settings.value("axesOffsetList").toList()
-     axesFitList = settings.value("axesFitList").toList()
+     axesList = settings.value("axesList")
+     axesScaleList = settings.value("axesScaleList")
+     axesOffsetList = settings.value("axesOffsetList")
+     axesFitList = settings.value("axesFitList")
      
      #restore tabwidget
-     self.tabWidget.setCurrentIndex(settings.value("tabWidthIndex").toInt()[0])
+     self.tabWidget.setCurrentIndex(settings.value("tabWidthIndex"))
 
      #style settings
-     self.xaxisLabel.setText(settings.value("xlabel").toString())
-     self.yaxisLabel.setText(settings.value("ylabel").toString())
-     self.xaxisUnit.setText(settings.value("xunit").toString())
-     self.yaxisUnit.setText(settings.value("yunit").toString())
-     self.plotStyleListLinePlot.setChecked(settings.value("listlineplot").toBool())
-     self.plotStyleListPlot.setChecked(settings.value("listplot").toBool())
-  #loadSettings(self)
+     self.xaxisLabel.setText(settings.value("xlabel"))
+     self.yaxisLabel.setText(settings.value("ylabel"))
+     self.xaxisUnit.setText(settings.value("xunit"))
+     self.yaxisUnit.setText(settings.value("yunit"))
+     self.plotStyleListLinePlot.setChecked(util.strtobool(settings.value("listlineplot")))
+     self.plotStyleListPlot.setChecked(util.strtobool(settings.value("listplot")))
 
   def closeEvent(self, event):
      self.authenticateDialog.close()
-     if self.db == None:
+     if self.db is None:
        message ("Not saving anything, you are not connected to a database")
        return
      
@@ -622,22 +621,22 @@ class SqlDataPlotMainWindow(QtGui.QMainWindow, Ui_MainWindow):
      settings.setValue("averageData", self.averageDataButton.isChecked())
 
      # store settings concering axes selections
-     axesList = [self.axesTbl.cellWidget(i,0).currentText() for i in xrange(self.axesTbl.rowCount())]
-     axesScaleList = [self.axesTbl.item(i,1).text() for i in xrange(self.axesTbl.rowCount())]
-     axesOffsetList = [self.axesTbl.item(i,2).text() for i in xrange(self.axesTbl.rowCount())]
-     axesFitList = [self.axesTbl.cellWidget(i+1,3).isChecked() for i in xrange(self.axesTbl.rowCount()-1)]
-     settings.setValue("axesList", QtCore.QVariant(axesList))
-     settings.setValue("axesScaleList", QtCore.QVariant(axesScaleList))
-     settings.setValue("axesOffsetList", QtCore.QVariant(axesOffsetList))
-     settings.setValue("axesFitList", QtCore.QVariant(axesFitList))
+     axesList = [self.axesTbl.cellWidget(i,0).currentText() for i in range(self.axesTbl.rowCount())]
+     axesScaleList = [self.axesTbl.item(i,1).text() for i in range(self.axesTbl.rowCount())]
+     axesOffsetList = [self.axesTbl.item(i,2).text() for i in range(self.axesTbl.rowCount())]
+     axesFitList = [self.axesTbl.cellWidget(i+1,3).isChecked() for i in range(self.axesTbl.rowCount()-1)]
+     settings.setValue("axesList", axesList)
+     settings.setValue("axesScaleList", axesScaleList)
+     settings.setValue("axesOffsetList", axesOffsetList)
+     settings.setValue("axesFitList", axesFitList)
 
      # store transformation settings
      settings.setValue("transformType",self.transformTypeCombo.currentText())
-     transformValueList = [self.transformConstantTbl.item(i,1).text() for i in xrange(self.transformConstantTbl.rowCount())] 
-     settings.setValue("transformValueList", QtCore.QVariant(transformValueList))
+     transformValueList = [self.transformConstantTbl.item(i,1).text() for i in range(self.transformConstantTbl.rowCount())] 
+     settings.setValue("transformValueList", transformValueList)
 
      # store tabview settings
-     settings.setValue("tabWidthIndex", QtCore.QVariant(self.tabWidget.currentIndex()))
+     settings.setValue("tabWidthIndex", self.tabWidget.currentIndex())
 
      #restore fit settings
      settings.setValue("fitType",self.fitTypeCombo.currentText())
@@ -709,8 +708,8 @@ class SqlDataPlotMainWindow(QtGui.QMainWindow, Ui_MainWindow):
       return
     
     try:
-      multiplicators = [float(self.axesTbl.item(i,1).text()) for i in xrange(self.axesTbl.rowCount())]
-      offsets = [float(self.axesTbl.item(i,2).text()) for i in xrange(self.axesTbl.rowCount())]
+      multiplicators = [float(self.axesTbl.item(i,1).text()) for i in range(self.axesTbl.rowCount())]
+      offsets = [float(self.axesTbl.item(i,2).text()) for i in range(self.axesTbl.rowCount())]
     except ValueError:
       errorMessage("Wrong multiplicators, 'float' expected")
       multiplicators = np.ones(self.axesTbl.rowCount())
@@ -758,8 +757,8 @@ class SqlDataPlotMainWindow(QtGui.QMainWindow, Ui_MainWindow):
           self.sdpStatusBar.showMessage("point is unclear")
         
         self.statusBar().showMessage('(%f.6, %f.6) has Cyclenumber: %s' % (ox, oy, str(int(float(dt[0][0])))))
-      except IndexError as (errno, strerror):
-        errorMessage ("IndexError, couldn't pick this point({0}): {1}".format(errno, strerror))
+      except IndexError as e:
+        errorMessage ("IndexError, couldn't pick this point({0}): {1}".format(e[0], e[1]))
   #pickedPoint(self, point)
 
   def databaseChanged(self, f):
@@ -785,17 +784,18 @@ class SqlDataPlotMainWindow(QtGui.QMainWindow, Ui_MainWindow):
         self.datasetList.setCurrentItem(lastDataset[0])
         self.datasetSelected(self.datasetList.currentItem())
       else:
-        print "not restoring anything, something totally wrong?!"
+        print("not restoring anything, something totally wrong?!")
     except:
-      print "Error in 'databaseChanged'"
-  #databaseChanged(self, f)
+      print("Error in 'databaseChanged'")
+    #finally:      
+      #self.preventLoadingData = False 
 
   def connectToDatabase(self, createTemporaryDatabase=True):      
-    message ("changed database")
+    message("changed database")
 
     try:
       # connect to mysql database
-      print "connecting to mysql"
+      print("connecting to mysql")
       ssl_settings = {
         'key': self.pathname+"/certificate/client-key.pem", \
         'ca': self.pathname+'/certificate/ca-cert.pem', \
@@ -806,9 +806,9 @@ class SqlDataPlotMainWindow(QtGui.QMainWindow, Ui_MainWindow):
         
       self.dbcur.execute("SET AUTOCOMMIT=1")
       self.dbcur.execute("show full processlist")
-      print self.dbcur.fetchall()
+      print(self.dbcur.fetchall())
       self.db.commit()
-      print "... connected"
+      print("... connected")
 
       # check if we are using ssl
       self.dbcur.execute("SHOW STATUS LIKE 'Ssl_cipher'")
@@ -823,22 +823,22 @@ class SqlDataPlotMainWindow(QtGui.QMainWindow, Ui_MainWindow):
       self.dbcur.execute("SELECT DISTINCT Date FROM dataTable ORDER BY id DESC");
       self.db.commit()
       dt = self.dbcur.fetchall()
-      dateA = range(len(dt))
+      dateA = list(range(len(dt)))
       self.dateCombo.clear()
       for i,d in enumerate(dt):
         dateA[i] = d[0]
         try:
-          self.dateCombo.addItem(QtCore.QString(dateA[i]))
+          self.dateCombo.addItem(dateA[i])
         except TypeError:
           pass
         
-    except mysql.Error,e:
+    except mysql.Error as e:
       self.setEnabled(False)
       self.sdpStatusBar.showMessage("Couldn't connect to MySQL server")
-    except sqlite.OperationalError,e:
-      print "handled a sqlite exception:"
-      print e      
-  #connectToDatabase(self, createTemporaryDatabase=True)
+    except sqlite.OperationalError:
+      print("handled a sqlite exception:")
+      
+  
 
   def fitPluginSelected(self, pluginId, noloading=False):
     """ fit type changed, the trefore create a new instance of fit plugin"""
@@ -862,8 +862,8 @@ class SqlDataPlotMainWindow(QtGui.QMainWindow, Ui_MainWindow):
       self.parametersTbl.setHorizontalHeaderLabels(["name", "init", "keep", "fixed"])
       self.parametersTbl.verticalHeader().hide()
       for i,p in enumerate(parameters):
-        self.parametersTbl.setItem(i,0, QtGui.QTableWidgetItem(QtCore.QString(str(p))))
-        self.parametersTbl.setItem(i,1, QtGui.QTableWidgetItem(QtCore.QString(str(autoparameters[i]))))
+        self.parametersTbl.setItem(i,0, QtGui.QTableWidgetItem(str(p)))
+        self.parametersTbl.setItem(i,1, QtGui.QTableWidgetItem(str(autoparameters[i])))
         self.parametersTbl.setCellWidget(i,2,QtGui.QCheckBox(self))
         self.parametersTbl.setCellWidget(i,3,QtGui.QCheckBox(self))
         self.parametersTbl.resizeColumnToContents(i)
@@ -899,15 +899,15 @@ class SqlDataPlotMainWindow(QtGui.QMainWindow, Ui_MainWindow):
     try:
       QtCore.QObject.disconnect(self.transformConstantTbl, QtCore.SIGNAL('cellChanged(int, int)'),self.loadData)
       
-      if constants == None:
+      if constants is None:
         constants = []
 
       self.transformConstantTbl.setRowCount(len(constants))
 
       for i,p in enumerate(constants):
-        self.transformConstantTbl.setItem(i,0, QtGui.QTableWidgetItem(QtCore.QString(str(p))))
+        self.transformConstantTbl.setItem(i,0, QtGui.QTableWidgetItem(str(p)))
         if not self.transformConstantTbl.item(i,1):
-          self.transformConstantTbl.setItem(i,1, QtGui.QTableWidgetItem(QtCore.QString("1")))
+          self.transformConstantTbl.setItem(i,1, QtGui.QTableWidgetItem("1"))
         self.transformConstantTbl.setRowHeight(i,20)
     finally:
       QtCore.QObject.connect(self.transformConstantTbl, QtCore.SIGNAL('cellChanged(int, int)'),self.loadData)   
@@ -926,8 +926,8 @@ class SqlDataPlotMainWindow(QtGui.QMainWindow, Ui_MainWindow):
     
       for i,p in enumerate(parameters):
         if self.parametersTbl.cellWidget(i,2) and not self.parametersTbl.cellWidget(i,2).isChecked():
-          print "auto-changing parameter"
-          self.parametersTbl.setItem(i,1, QtGui.QTableWidgetItem(QtCore.QString(str(p))))
+          print("auto-changing parameter")
+          self.parametersTbl.setItem(i,1, QtGui.QTableWidgetItem(str(p)))
       
       self.loadData()
     finally:
@@ -947,11 +947,11 @@ class SqlDataPlotMainWindow(QtGui.QMainWindow, Ui_MainWindow):
     self.dbcur.execute ("SELECT DISTINCT Dataset FROM dataTable WHERE Date=%s", [str(date)]);
     self.db.commit()
     dt=self.dbcur.fetchall()
-    sets = range(len(dt))
+    sets = list(range(len(dt)))
     self.datasetList.clear()
     for i,d in enumerate(dt):
       sets[i] = d[0]
-      self.datasetList.addItem(QtCore.QString(sets[i]))
+      self.datasetList.addItem(sets[i])
   #dateSelected(self, date)
 
   def datasetSelected(self, dataset):
@@ -970,7 +970,7 @@ class SqlDataPlotMainWindow(QtGui.QMainWindow, Ui_MainWindow):
     self.dataset = str(dataset.text())
       
     message ("selected %s / %s" % (self.dataset, self.date))
-    if debugTiming: print "SELECT * FROM dataTable WHERE Date=%s AND Dataset=%s LIMIT 1" % (self.date,self.dataset)
+    if debugTiming: print("SELECT * FROM dataTable WHERE Date=%s AND Dataset=%s LIMIT 1" % (self.date,self.dataset))
     self.dbcur.execute ("SELECT * FROM dataTable WHERE Date=%s AND Dataset=%s LIMIT 1", (self.date,self.dataset))
     self.db.commit()
     self.keys = self.setKeys(self.dbcur.description)
@@ -978,44 +978,44 @@ class SqlDataPlotMainWindow(QtGui.QMainWindow, Ui_MainWindow):
     #update the output
 
     self._datasetselected = time.time()
-    if debugTiming: print "timing datasetSelected: %.3f s" % (self._datasetselected-self._datasetselectedstart)
+    if debugTiming: print("timing datasetSelected: %.3f s" % (self._datasetselected-self._datasetselectedstart))
     
     self.loadInfo()
 
     self._tloadinfo = time.time()
-    if debugTiming: print "timing loadInfo: %.3f s" % (self._tloadinfo-self._datasetselected)
+    if debugTiming: print("timing loadInfo: %.3f s" % (self._tloadinfo-self._datasetselected))
 
     self.updateConditions()
 
     self._tupdatecond = time.time()
-    if debugTiming: print "timing updateConditions: %.3f s" % (self._tupdatecond-self._tloadinfo)
+    if debugTiming: print("timing updateConditions: %.3f s" % (self._tupdatecond-self._tloadinfo))
     
     self.updateAxesList()
 
     self._tupdateaxeslist = time.time()
-    if debugTiming: print "timing updateAxesList: %.3f s" % (self._tupdateaxeslist-self._tupdatecond)
+    if debugTiming: print("timing updateAxesList: %.3f s" % (self._tupdateaxeslist-self._tupdatecond))
     
     self.updateTransformPlugin()
 
     self._tupdatetransform = time.time()
-    if debugTiming: print "timing updateTransform: %.3f s" % (self._tupdatetransform-self._tupdateaxeslist)
+    if debugTiming: print("timing updateTransform: %.3f s" % (self._tupdatetransform-self._tupdateaxeslist))
     
     self.updateFitPlugin()
 
     self._tupdatefitplugin = time.time()
-    if debugTiming: print "timing updateFitPlugin: %.3f s" % (self._tupdatefitplugin-self._tupdatecond)
+    if debugTiming: print("timing updateFitPlugin: %.3f s" % (self._tupdatefitplugin-self._tupdatecond))
     
     self.loadData()
 
     self._tloaddata = time.time()
-    if debugTiming: print "timing loadData: %.3f s" % (self._tloaddata-self._tupdatefitplugin)
+    if debugTiming: print("timing loadData: %.3f s" % (self._tloaddata-self._tupdatefitplugin))
 
     self.queryexectime = (self._tloaddata - self._datasetselectedstart)*1000
   #datasetSelected(self, dataset)
 
   def getAxesStr(self,i=0):
     axesStr = ""
-    for i in xrange(self.axesTbl.rowCount()):
+    for i in range(self.axesTbl.rowCount()):
       checked = "1" if self.axesTbl.cellWidget(i,3) and self.axesTbl.cellWidget(i,3).isChecked() else "0"
       axesStr += str(self.axesTbl.cellWidget(i,0).currentText())+","+str(self.axesTbl.item(i,1).text())+","+str(self.axesTbl.item(i,2).text())+","+checked+"|"
     message( "\tAxes: '%s'" % axesStr)
@@ -1072,7 +1072,7 @@ class SqlDataPlotMainWindow(QtGui.QMainWindow, Ui_MainWindow):
   #removeCondition(self)
 
   def toggledTransform(self, noload=False):
-    axesList = [str(self.axesTbl.cellWidget(i,0).currentText()) for i in xrange(self.axesTbl.rowCount())]
+    axesList = [str(self.axesTbl.cellWidget(i,0).currentText()) for i in range(self.axesTbl.rowCount())]
     if self.transformDataButton.isChecked() and self.transformSelectedPlugin.validInputParameters(axesList):
       self.axesTbl.setEnabled(False)
     else:
@@ -1087,7 +1087,7 @@ class SqlDataPlotMainWindow(QtGui.QMainWindow, Ui_MainWindow):
                        "FROM conditionTable WHERE Date=%s and Dataset=%s LIMIT 1", (self.date,self.dataset))
     dt = self.conditionCursor.fetchall()
       
-    if len(dt)>0 and not dt[0][0] == None:
+    if len(dt)>0 and not dt[0][0] is None:
       message( "Stored Transform Plugin for '%s': '%s'" % (self.dataset, dt[0][0]))
       self.restoreComboIndex(self.transformTypeCombo, str(dt[0][0]))
       self.transformPluginSelected(self.transformTypeCombo.currentIndex(), True)
@@ -1097,7 +1097,7 @@ class SqlDataPlotMainWindow(QtGui.QMainWindow, Ui_MainWindow):
 
         const = (dt[0][1].split("|"))[:-1]
         message( "Stored Transform Constants for '%s': '%s'" % (self.dataset, str(const)))
-        for i in xrange(self.transformConstantTbl.rowCount()):
+        for i in range(self.transformConstantTbl.rowCount()):
           self.transformConstantTbl.setItem(i,1, QtGui.QTableWidgetItem(const[i]))
       finally:
         QtCore.QObject.connect(self.transformConstantTbl, QtCore.SIGNAL('cellChanged(int, int)'),self.loadData)  
@@ -1108,7 +1108,7 @@ class SqlDataPlotMainWindow(QtGui.QMainWindow, Ui_MainWindow):
                        "FROM conditionTable WHERE Date=%s and Dataset=%s LIMIT 1", (self.date,self.dataset))
     dt = self.conditionCursor.fetchall()
     fitStrs = []
-    if len(dt)>0 and not dt[0][0] == None and not dt[0][1] == None and not dt[0][0] == "None":
+    if len(dt)>0 and not dt[0][0] is None and not dt[0][1] is None and not dt[0][0] == "None":
       message( "Stored Fit Plugin for '%s': '%s'" % (self.dataset, dt[0][0]))
       fitplugin = dt[0][0]
       fitparams = (str(dt[0][1]).split("|"))[:-1]
@@ -1132,7 +1132,7 @@ class SqlDataPlotMainWindow(QtGui.QMainWindow, Ui_MainWindow):
       self.parametersTbl.verticalHeader().hide()
       self.parametersTbl.horizontalHeader().setVisible(True)
       
-      for row in xrange(self.parametersTbl.rowCount()):
+      for row in range(self.parametersTbl.rowCount()):
         if row < numParams:
           cFit = fitparams[row].split(",") # saved fit params
           if len(cFit)==4:
@@ -1140,8 +1140,8 @@ class SqlDataPlotMainWindow(QtGui.QMainWindow, Ui_MainWindow):
         else:
           cFit = ["","0","0","0"]
           
-        self.parametersTbl.setItem(row,0, QtGui.QTableWidgetItem(QtCore.QString(cFit[0])))
-        self.parametersTbl.setItem(row,1, QtGui.QTableWidgetItem(QtCore.QString(cFit[1])))
+        self.parametersTbl.setItem(row,0, QtGui.QTableWidgetItem(cFit[0]))
+        self.parametersTbl.setItem(row,1, QtGui.QTableWidgetItem(cFit[1]))
         keepcheck = QtGui.QCheckBox(self) 
         self.parametersTbl.setCellWidget(row,2,keepcheck);
         keepcheck.setChecked(cFit[2]=="1")
@@ -1167,7 +1167,7 @@ class SqlDataPlotMainWindow(QtGui.QMainWindow, Ui_MainWindow):
     if self.useoldAxes == 1 and len(self.oldaxesStrs)!=0:
         axesStrs = (str(self.oldaxesStrs).split("|"))[:-1]
     else:
-      if len(dt)>0 and not dt[0][0] == None:
+      if len(dt)>0 and not dt[0][0] is None:
         message ("Stored Axes for '%s': '%s'" % (self.dataset, dt[0][0]))
         axesStrs = (str(dt[0][0]).split("|"))[:-1]
       else:
@@ -1180,7 +1180,7 @@ class SqlDataPlotMainWindow(QtGui.QMainWindow, Ui_MainWindow):
     
     try:
       QtCore.QObject.disconnect(self.axesTbl, QtCore.SIGNAL('cellChanged(int, int)'),self.loadData)
-      for row in xrange(self.numAxes):
+      for row in range(self.numAxes):
         if row < len(axesStrs):
           cAxis = axesStrs[row].split(",")
           if len(cAxis)==3:
@@ -1214,7 +1214,7 @@ class SqlDataPlotMainWindow(QtGui.QMainWindow, Ui_MainWindow):
         # keys might have changes, therefor refill this !""/$ again and select right key
         combo.clear()
         for i,desc in enumerate(self.keys):
-          combo.addItem(QtCore.QString(desc[0]))
+          combo.addItem(desc[0])
           if desc[0]==cAxis[0]:
             combo.setCurrentIndex(i)
         
@@ -1244,13 +1244,13 @@ class SqlDataPlotMainWindow(QtGui.QMainWindow, Ui_MainWindow):
       self.connectToDatabase()
 
     # gui adjustments, it's not clean to do this here, but it's fast so we don't care
-    for i in xrange(self.axesTbl.rowCount()):
+    for i in range(self.axesTbl.rowCount()):
       self.axesTbl.resizeColumnToContents(i)
 
-    for i in xrange(self.conditionTbl.rowCount()):
+    for i in range(self.conditionTbl.rowCount()):
       self.conditionTbl.resizeColumnToContents(i)
 
-    for i in xrange(self.parametersTbl.rowCount()-1):
+    for i in range(self.parametersTbl.rowCount()-1):
       self.parametersTbl.resizeColumnToContents(i)
     
     date = self.dateCombo.currentText()
@@ -1261,7 +1261,7 @@ class SqlDataPlotMainWindow(QtGui.QMainWindow, Ui_MainWindow):
     try:
       QtCore.QObject.disconnect(self.axesTbl, QtCore.SIGNAL('cellChanged(int, int)'),self.loadData)
       columns = []  
-      for i in xrange(self.axesTbl.rowCount()):
+      for i in range(self.axesTbl.rowCount()):
         newColumn = self.axesTbl.cellWidget(i,0).currentText()     
         if newColumn=="":
           return
@@ -1280,7 +1280,7 @@ class SqlDataPlotMainWindow(QtGui.QMainWindow, Ui_MainWindow):
     conditions= [" "]
     if not self.disableConditionsButton.isChecked():
       try:
-        for i in xrange(self.conditionTbl.rowCount()):
+        for i in range(self.conditionTbl.rowCount()):
           if self.conditionTbl.cellWidget(i,0).isChecked():
             newCondition = self.conditionTbl.cellWidget(i,1).currentText()+self.conditionTbl.cellWidget(i,2).currentText()+self.conditionTbl.item(i,3).text()
           conditions.append(newCondition)
@@ -1289,7 +1289,7 @@ class SqlDataPlotMainWindow(QtGui.QMainWindow, Ui_MainWindow):
         message("output is not ready yet")
         return
        
-    for i in xrange(1, self.axesTbl.rowCount()):
+    for i in range(1, self.axesTbl.rowCount()):
       conditions.append(self.axesTbl.cellWidget(i,0).currentText()+"!='None' ")
 
     # join the condition list. map to str, because the condition might be a QString
@@ -1297,8 +1297,8 @@ class SqlDataPlotMainWindow(QtGui.QMainWindow, Ui_MainWindow):
     
     # load data from database
     try:
-      if debugTiming: print ("SELECT "+columnStr+" FROM dataTable WHERE Date=%s AND Dataset=%s "+conditionStr+" ORDER BY id") % (self.date,self.dataset)
-      self.dbcur.execute (str("SELECT "+columnStr+" FROM dataTable WHERE Date=%s AND Dataset=%s "+conditionStr+" ORDER BY id"), (self.date,self.dataset))      
+      if debugTiming: print(("SELECT "+columnStr+" FROM dataTable WHERE Date=%s AND Dataset=%s "+conditionStr+" ORDER BY id") % (self.date,self.dataset))
+      self.dbcur.execute (str("SELECT "+columnStr+" FROM dataTable WHERE Date=%s AND Dataset=%s "+conditionStr+" ORDER BY id"), (self.date,self.dataset))
       dt = self.dbcur.fetchall()
       self.db.commit()
     except:
@@ -1342,7 +1342,7 @@ class SqlDataPlotMainWindow(QtGui.QMainWindow, Ui_MainWindow):
     
     try:
       #iterate through all axes and values
-      for j in xrange(self.axesTbl.rowCount()):
+      for j in range(self.axesTbl.rowCount()):
         #self.currentData[j] = np.ones((len(dt))
         for i,d in enumerate(dt):
           self.currentData[j,i] = float(d[j])
@@ -1359,7 +1359,7 @@ class SqlDataPlotMainWindow(QtGui.QMainWindow, Ui_MainWindow):
     self.currentData = self.currentData[:,self.currentData[0,:].argsort()]
 
     #get the new indices of the last data
-    lastIndices = [np.where(self.currentData[i,:] == self.currentLast[i])[0][0] for i in xrange(self.currentData.shape[0])]
+    lastIndices = [np.where(self.currentData[i,:] == self.currentLast[i])[0][0] for i in range(self.currentData.shape[0])]
 
     # transform if wanted
     if self.transformDataButton.isChecked():
@@ -1368,7 +1368,7 @@ class SqlDataPlotMainWindow(QtGui.QMainWindow, Ui_MainWindow):
       #sort after transform
       self.currentData = self.currentData[:,self.currentData[0,:].argsort()]
 
-    self.currentLast = [ self.currentData[i, lastIndices[i]] for i in xrange(self.currentData.shape[0])]
+    self.currentLast = [ self.currentData[i, lastIndices[i]] for i in range(self.currentData.shape[0])]
     
     #average data
     if self.averageDataButton.isChecked():
@@ -1391,7 +1391,7 @@ class SqlDataPlotMainWindow(QtGui.QMainWindow, Ui_MainWindow):
     # deal with it if
     try:
       param=[]
-      for i in xrange(self.parametersTbl.rowCount()):
+      for i in range(self.parametersTbl.rowCount()):
         if (self.parametersTbl.item(i,1) != None):
           paramv=float(self.parametersTbl.item(i,1).text())
           paramfix=True if self.parametersTbl.cellWidget(i,3) and self.parametersTbl.cellWidget(i,3).isChecked() else False
@@ -1399,11 +1399,11 @@ class SqlDataPlotMainWindow(QtGui.QMainWindow, Ui_MainWindow):
           #print "param",i," value=",paramv," fixed=",paramfix
         else:
           self.parametersTbl.removeRow(i)
-      fitSelection = [self.axesTbl.cellWidget(i,3).isChecked() for i in xrange(1,self.axesTbl.rowCount()) ]
+      fitSelection = [self.axesTbl.cellWidget(i,3).isChecked() for i in range(1,self.axesTbl.rowCount()) ]
       self.currentFitData = self.fitSelectedPlugin.fit(self.currentData, self.currentErrData, param, xmin=self.fitFromSpin.value(), xmax=self.fitToSpin.value(), fitAxes=fitSelection)
     except (ValueError, TypeError):
       self.textEdit.setText("fitting error")
-      print "Fit is not converging!"
+      print("Fit is not converging!")
       self.sdpStatusBar.showMessage("the fit is not converging, try 'Reset to recommanded initial parameters' or change them manually!")
       self.currentFitData = np.array([]) 
     finally:
@@ -1423,12 +1423,12 @@ class SqlDataPlotMainWindow(QtGui.QMainWindow, Ui_MainWindow):
     # print "rerr:", plugin.rerr
     # print "converged:", converged
     try:
-      for ai in xrange(self.axesTbl.rowCount()-1):
+      for ai in range(self.axesTbl.rowCount()-1):
         plainText = "%s<p style=\"font-size:11pt;font-weight:bold; margin:0px;\">%s:</p> " \
                     "<hr>" % (plainText,self.axesTbl.cellWidget(ai+1,0).currentText())
         if converged[ai]:
           plainText = "%s<p style=\"margin-top:0px; margin-bottom:5px;margin-left:10px\">" % plainText
-          for i in xrange(len(parameters)):
+          for i in range(len(parameters)):
             if plugin.rerr[ai][i]=="Err":
               plainText = "%s<b>%s</b>=\t<span style=\"font-weight: bold;font-size:10pt;color:#00aa00;\">%s</span><br>" % (plainText,self.parametersTbl.item(i,0).text(),round_to_n(plugin.rp[ai][i],5))
             else:
@@ -1473,12 +1473,12 @@ class SqlDataPlotMainWindow(QtGui.QMainWindow, Ui_MainWindow):
       dealedwith = np.append(dealedwith, i[0])
       # found an already existing x value
       if dealedwith[dealedwith == i[0]].size == 1:
-        self.currentData[d,:] = map(mean, data[data[:,0] == i[0]].T)
+        self.currentData[d,:] = list(map(mean, data[data[:,0] == i[0]].T))
 
         if self.avgStdSqrtN.isChecked():
-          self.currentErrData[d,:] = map(stdSqrtN, data[data[:,0] == i[0]].T)
+          self.currentErrData[d,:] = list(map(stdSqrtN, data[data[:,0] == i[0]].T))
         else:
-          self.currentErrData[d,:] = map(std, data[data[:,0] == i[0]].T)
+          self.currentErrData[d,:] = list(map(std, data[data[:,0] == i[0]].T))
                   
         d+=1
         
@@ -1487,9 +1487,9 @@ class SqlDataPlotMainWindow(QtGui.QMainWindow, Ui_MainWindow):
   #averageData(self)
 
   def transformData(self):
-    axesList = [str(self.axesTbl.cellWidget(i,0).currentText()) for i in xrange(self.axesTbl.rowCount())]
+    axesList = [str(self.axesTbl.cellWidget(i,0).currentText()) for i in range(self.axesTbl.rowCount())]
     if self.transformSelectedPlugin.validInputParameters(axesList):
-      constantList = [float(self.transformConstantTbl.item(i,1).text()) for i in xrange(self.transformConstantTbl.rowCount())]
+      constantList = [float(self.transformConstantTbl.item(i,1).text()) for i in range(self.transformConstantTbl.rowCount())]
 
       try:
         self.currentData = self.transformSelectedPlugin.transform(self.currentData,axesList,constantList)
@@ -1497,7 +1497,7 @@ class SqlDataPlotMainWindow(QtGui.QMainWindow, Ui_MainWindow):
         self.sdpStatusBar.showMessage("You don't have the right input parameters (axes) for this transformation")
         self.currentData = np.array([])
     else:
-      print "couldn't transform, wrong input parameters"
+      print("couldn't transform, wrong input parameters")
       self.sdpStatusBar.showMessage("couldn't transform, wrong input parameters")  
   #transformData(self)
 
@@ -1562,11 +1562,11 @@ class SqlDataPlotMainWindow(QtGui.QMainWindow, Ui_MainWindow):
 
     try:
       if not self.transformDataButton.isChecked():
-        multiplicators = [float(self.axesTbl.item(i,1).text()) for i in xrange(self.axesTbl.rowCount())]
-        offsets = [float(self.axesTbl.item(i,2).text()) for i in xrange(self.axesTbl.rowCount())]
+        multiplicators = [float(self.axesTbl.item(i,1).text()) for i in range(self.axesTbl.rowCount())]
+        offsets = [float(self.axesTbl.item(i,2).text()) for i in range(self.axesTbl.rowCount())]
       else:
-        multiplicators = [1 for i in xrange(self.currentData.shape[0])]
-        offsets = [0 for i in xrange(self.currentData.shape[0])]        
+        multiplicators = [1 for i in range(self.currentData.shape[0])]
+        offsets = [0 for i in range(self.currentData.shape[0])]        
     except ValueError:
       errorMessage("Wrong multiplicators, 'float' expected")
       multiplicators = np.ones(self.axesTbl.rowCount())
@@ -1574,7 +1574,7 @@ class SqlDataPlotMainWindow(QtGui.QMainWindow, Ui_MainWindow):
       
     # plotting
     curveIndex = 0;
-    for j in xrange(self.currentData.shape[0]-1):
+    for j in range(self.currentData.shape[0]-1):
       # is fitting data available?
       if self.currentFitData.size > 0 and self.axesTbl.cellWidget(j+1,3).isChecked() and self.fitDataButton.isChecked():
         self.showCurve(curveIndex,self.currentFitData[0]*multiplicators[0] + offsets[0], self.currentFitData[j+1]*multiplicators[j+1] + offsets[j+1], hints="fit", colorIdx=j)
@@ -1592,7 +1592,7 @@ class SqlDataPlotMainWindow(QtGui.QMainWindow, Ui_MainWindow):
     self.mainPlot.setAxisTitle(Qwt.QwtPlot.yLeft, "" if ytext=="/" else ytext)
 
     # disable all unnecessary curves
-    for i in xrange(curveIndex, len(self.curves)):
+    for i in range(curveIndex, len(self.curves)):
       self.curves[i].detach()
       
     if self.pickingMode == "zoom":
